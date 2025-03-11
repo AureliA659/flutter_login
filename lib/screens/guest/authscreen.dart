@@ -2,7 +2,8 @@ import "package:flutter/material.dart";
 import "package:flutter_emoji/flutter_emoji.dart";
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final Function(int) onChangedStep;
+  const AuthScreen({super.key, required this.onChangedStep});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -10,6 +11,11 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final emojiParser = EmojiParser();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final RegExp emailRegex = RegExp(
+      r"^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]+(\.[a-zA-Z]+)?$"); //email regex
+  String _email = "";
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -46,7 +52,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 const SizedBox(
-                  height: 20.0,
+                  height: 10.0,
                 ),
                 const Text(
                   "Yours starts here!",
@@ -56,52 +62,78 @@ class _AuthScreenState extends State<AuthScreen> {
                   height: 100.0,
                 ),
                 Form(
+                    key: _formKey,
                     child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  //crossAxisAlignment: how the children are aligned
-                  children: [
-                    const Text("Enter your email:"),
-                    const SizedBox(
-                      height: 10.0,
-                    ),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        hintText: "ex:johnsmith@gmail.com",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(0.0),
-                          borderSide: const BorderSide(color: Colors.grey),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      //crossAxisAlignment: how the children are aligned
+                      children: [
+                        const Text("Enter your email:"),
+                        const SizedBox(
+                          height: 10.0,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(0.0),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 10.0,
-                    ),
-                    ElevatedButton(
-                      onPressed: () => print("send"),
-                      style: ButtonStyle(
-                        padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(vertical: 15.0)),
-                        backgroundColor: WidgetStateProperty.all(
-                            const Color.fromARGB(255, 206, 117, 117)),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(0.0),
+                        TextFormField(
+                          onChanged: (value) => setState(() {
+                            _email = value;
+                          }),
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                !emailRegex.hasMatch(value)) {
+                              return "Please enter a valid email";
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "ex:johnsmith@gmail.com",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(0.0),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(0.0),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
                           ),
                         ),
-                        elevation: WidgetStateProperty.all(0.0),
-                      ),
-                      child: const Text("CONTINUE",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20.0,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ))
+                        const SizedBox(
+                          height: 10.0,
+                        ),
+                        ElevatedButton(
+                          onPressed: !emailRegex.hasMatch(_email)
+                              ? null
+                              : () {
+                                  if (_formKey.currentState?.validate() ??
+                                      false) {
+                                    debugPrint(_email);
+                                    widget.onChangedStep(1);
+                                  }
+                                },
+                          style: ButtonStyle(
+                            padding: WidgetStateProperty.all(
+                                const EdgeInsets.symmetric(vertical: 15.0)),
+                            backgroundColor:
+                                WidgetStateProperty.resolveWith((states) {
+                              if (!emailRegex.hasMatch(_email)) {
+                                return Colors.grey;
+                              }
+                              return Theme.of(context).primaryColor;
+                            }),
+                            shape:
+                                WidgetStateProperty.all<RoundedRectangleBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(0.0),
+                              ),
+                            ),
+                            elevation: WidgetStateProperty.all(0.0),
+                          ),
+                          child: const Text("CONTINUE",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ))
               ],
             ),
           )),
